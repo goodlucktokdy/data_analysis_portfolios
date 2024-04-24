@@ -1,6 +1,5 @@
--- ARPU * RETENTION_RATE를 통해 CLV 구하기
+-- AOV * RETENTION_RATE를 통해 CLV 구하기
 
--- ARPU 구하기
 WITH T1 AS
 	(
 	SELECT oml.mem_no, oml.ord_dt, oml.order_amount, fotl.age_range, fotl.first_ord_dt
@@ -32,7 +31,7 @@ COHORT AS
 			WHEN ord_dt >= '2023-06-01' AND ord_dt < '2023-07-01' THEN 'M-6'
 			ELSE NULL END AS ord_month
 		, COUNT(DISTINCT mem_no) AS retention_base
-		, ROUND(AVG(order_amount),2) AS arpu
+		, ROUND(AVG(order_amount),2) AS aov
 	FROM
 		T1
 	WHERE ord_dt < '2023-07-01'
@@ -41,17 +40,17 @@ COHORT AS
 	ORDER BY 
 		ord_month, age_range
 	),
-ARPU_RETENTION AS	
+AOV_RETENTION AS	
 	(
 	SELECT
 		age_range,
 		ord_month,
 		1.000 * retention_base / MAX(retention_base) OVER (PARTITION BY age_range) AS retention_rate,
-		arpu
+		aov
 	FROM 
 		COHORT
 	)
-SELECT age_range, ord_month, retention_rate, arpu,
+SELECT age_range, ord_month, retention_rate, aov,
 	ROUND(arpu * retention_rate,2) AS LTV
 FROM
-	ARPU_RETENTION
+	AOV_RETENTION
